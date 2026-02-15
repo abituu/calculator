@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Restaurant Recipe Cost Calculator</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --primary: #0d9488;
+      --primary-dark: #0f766e;
+      --danger: #dc2626;
+      --line: #e5e7eb;
+      --success: #065f46;
+      --success-bg: #ecfdf5;
+      --shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at top left, #eefcf9 0%, #f8fbff 30%, var(--bg) 80%);
+      line-height: 1.4;
+    }
+
+    .container {
+      width: min(1100px, 95vw);
+      margin: 32px auto 48px;
+    }
+
+    .header {
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.6rem, 2.7vw, 2.2rem);
+    }
+
+    .header p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 780px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 1.25rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+    }
+
+    .field { grid-column: span 12; }
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
+    .span-6 { grid-column: span 6; }
+
+    label {
+      display: block;
+      font-size: .9rem;
+      color: #374151;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      font-size: .95rem;
+      background: #fff;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary);
+      outline: 3px solid rgba(13, 148, 136, 0.13);
+    }
+
+    .ingredient-table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 920px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: middle;
+      font-size: .92rem;
+    }
+
+    th {
+      font-size: .82rem;
+      color: #374151;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      background: #fbfdff;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    td input, td select {
+      padding: 8px 9px;
+      font-size: .9rem;
+      border-radius: 8px;
+    }
+
+    .num { width: 100%; min-width: 110px; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 94px;
+      background: #f3f4f6;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .06s ease, opacity .18s ease;
+    }
+
+    button:active { transform: translateY(1px); }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .btn-secondary {
+      background: #111827;
+      color: white;
+    }
+
+    .btn-light {
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .btn-danger {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    .totals {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .total-card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fcfcfd;
+    }
+
+    .total-card .label {
+      font-size: .82rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+
+    .total-card .value {
+      font-size: 1.3rem;
+      font-weight: 800;
+    }
+
+    .pricing {
+      margin-top: 12px;
+      border: 1px solid #a7f3d0;
+      background: var(--success-bg);
+      color: var(--success);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .pricing strong {
+      font-size: 1.35rem;
+    }
+
+    .small {
+      font-size: .82rem;
+      color: var(--muted);
+    }
+
+    .remove-btn {
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: .82rem;
+      font-weight: 700;
+    }
+
+    @media (max-width: 800px) {
+      .span-3, .span-4, .span-6 { grid-column: span 12; }
+      .container { margin-top: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>Restaurant Recipe Cost Calculator</h1>
+      <p>Use this calculator to estimate recipe cost, cost per portion, target selling price, and gross margin. Add every ingredient with its purchase price and quantity used in the recipe.</p>
+    </header>
+
+    <section class="card">
+      <h2>Recipe Setup</h2>
+      <div class="grid">
+        <div class="field span-6">
+          <label for="recipeName">Recipe Name</label>
+          <input id="recipeName" type="text" placeholder="e.g., Creamy Mushroom Pasta" />
+        </div>
+        <div class="field span-3">
+          <label for="yield">Number of Portions (Yield)</label>
+          <input id="yield" type="number" min="1" step="1" value="10" />
+        </div>
+        <div class="field span-3">
+          <label for="currency">Currency Symbol</label>
+          <input id="currency" type="text" value="$" maxlength="3" />
+        </div>
+
+        <div class="field span-3">
+          <label for="waste">Waste / Trim %</label>
+          <input id="waste" type="number" min="0" step="0.1" value="0" />
+        </div>
+        <div class="field span-3">
+          <label for="overhead">Overhead % (optional)</label>
+          <input id="overhead" type="number" min="0" step="0.1" value="0" />
+        </div>
+        <div class="field span-3">
+          <label for="targetFoodCost">Target Food Cost %</label>
+          <input id="targetFoodCost" type="number" min="1" step="0.1" value="30" />
+        </div>
+        <div class="field span-3">
+          <label for="serviceCharge">Service / Misc % (optional)</label>
+          <input id="serviceCharge" type="number" min="0" step="0.1" value="0" />
+        </div>
+      </div>
+      <p class="small" style="margin-top:10px;">Tip: A lower target food cost % means a higher menu selling price (e.g., 25% = 4x recipe cost per portion).</p>
+    </section>
+
+    <section class="card">
+      <h2>Ingredients</h2>
+      <div class="ingredient-table-wrap">
+        <table id="ingredientsTable" aria-label="Ingredient cost input table">
+          <thead>
+            <tr>
+              <th>Ingredient</th>
+              <th>Pack Size</th>
+              <th>Pack Unit</th>
+              <th>Pack Price</th>
+              <th>Qty Used</th>
+              <th>Use Unit</th>
+              <th>Cost in Recipe</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="ingredientBody"></tbody>
+        </table>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary" id="addRowBtn" type="button">+ Add Ingredient</button>
+        <button class="btn-light" id="loadExampleBtn" type="button">Load Example</button>
+        <button class="btn-light" id="downloadHtmlBtn" type="button">Download HTML File</button>
+        <button class="btn-secondary" id="exportBtn" type="button">Export CSV</button>
+        <button class="btn-danger" id="clearBtn" type="button">Clear All</button>
+      </div>
+      <p class="small" style="margin-top:8px;">Need a portable copy? Use <strong>Download HTML File</strong> to save this complete calculator as a standalone <code>.html</code> file.</p>
+
+      <div class="totals">
+        <div class="total-card">
+          <span class="label">Total Ingredient Cost</span>
+          <div class="value" id="totalIngredientCost">$0.00</div>
+        </div>
+        <div class="total-card">
+          <span class="label">Waste + Overhead + Misc</span>
+          <div class="value" id="extraCost">$0.00</div>
+        </div>
+        <div class="total-card">
+          <span class="label">Total Recipe Cost</span>
+          <div class="value" id="totalRecipeCost">$0.00</div>
+        </div>
+        <div class="total-card">
+          <span class="label">Cost Per Portion</span>
+          <div class="value" id="costPerPortion">$0.00</div>
+        </div>
+      </div>
+
+      <div class="pricing" id="pricingBox">
+        Recommended Menu Price (based on target food cost): <strong id="suggestedPrice">$0.00</strong><br />
+        <span id="marginBreakdown">Set target food cost to calculate margin.</span>
+      </div>
+    </section>
+  </div>
+
+  <template id="rowTemplate">
+    <tr>
+      <td><input type="text" data-key="name" placeholder="e.g., Olive Oil" /></td>
+      <td><input class="num" type="number" data-key="packSize" min="0" step="0.001" value="1" /></td>
+      <td>
+        <select data-key="packUnit">
+          <option value="g">g</option>
+          <option value="kg">kg</option>
+          <option value="ml">ml</option>
+          <option value="l">l</option>
+          <option value="pcs">pcs</option>
+        </select>
+      </td>
+      <td><input class="num" type="number" data-key="packPrice" min="0" step="0.01" value="0" /></td>
+      <td><input class="num" type="number" data-key="qtyUsed" min="0" step="0.001" value="0" /></td>
+      <td>
+        <select data-key="useUnit">
+          <option value="g">g</option>
+          <option value="kg">kg</option>
+          <option value="ml">ml</option>
+          <option value="l">l</option>
+          <option value="pcs">pcs</option>
+        </select>
+      </td>
+      <td><span class="pill" data-cost-display>$0.00</span></td>
+      <td><button class="remove-btn btn-danger" type="button">Remove</button></td>
+    </tr>
+  </template>
+
+  <script>
+    const ingredientBody = document.getElementById('ingredientBody');
+    const rowTemplate = document.getElementById('rowTemplate');
+
+    const fields = {
+      currency: document.getElementById('currency'),
+      yield: document.getElementById('yield'),
+      waste: document.getElementById('waste'),
+      overhead: document.getElementById('overhead'),
+      serviceCharge: document.getElementById('serviceCharge'),
+      targetFoodCost: document.getElementById('targetFoodCost')
+    };
+
+    const output = {
+      totalIngredientCost: document.getElementById('totalIngredientCost'),
+      extraCost: document.getElementById('extraCost'),
+      totalRecipeCost: document.getElementById('totalRecipeCost'),
+      costPerPortion: document.getElementById('costPerPortion'),
+      suggestedPrice: document.getElementById('suggestedPrice'),
+      marginBreakdown: document.getElementById('marginBreakdown')
+    };
+
+    const unitToBaseFactor = {
+      g: 1,
+      kg: 1000,
+      ml: 1,
+      l: 1000,
+      pcs: 1
+    };
+
+    function num(value, fallback = 0) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function formatMoney(value) {
+      const currencySymbol = fields.currency.value || '$';
+      return `${currencySymbol}${num(value).toFixed(2)}`;
+    }
+
+    function canConvert(unitA, unitB) {
+      const groups = [['g', 'kg'], ['ml', 'l'], ['pcs']];
+      return groups.some(group => group.includes(unitA) && group.includes(unitB));
+    }
+
+    function convertUnits(value, fromUnit, toUnit) {
+      if (!canConvert(fromUnit, toUnit)) return NaN;
+      const base = value * unitToBaseFactor[fromUnit];
+      return base / unitToBaseFactor[toUnit];
+    }
+
+    function ingredientCostFromRow(row) {
+      const packSize = num(row.querySelector('[data-key="packSize"]').value);
+      const packUnit = row.querySelector('[data-key="packUnit"]').value;
+      const packPrice = num(row.querySelector('[data-key="packPrice"]').value);
+      const qtyUsed = num(row.querySelector('[data-key="qtyUsed"]').value);
+      const useUnit = row.querySelector('[data-key="useUnit"]').value;
+
+      if (packSize <= 0 || packPrice < 0 || qtyUsed < 0) return 0;
+
+      const usedInPackUnit = convertUnits(qtyUsed, useUnit, packUnit);
+      if (!Number.isFinite(usedInPackUnit)) return 0;
+
+      const unitCost = packPrice / packSize;
+      return usedInPackUnit * unitCost;
+    }
+
+    function computeTotals() {
+      const rows = [...ingredientBody.querySelectorAll('tr')];
+      let ingredientTotal = 0;
+
+      rows.forEach(row => {
+        const cost = ingredientCostFromRow(row);
+        ingredientTotal += cost;
+        row.querySelector('[data-cost-display]').textContent = formatMoney(cost);
+      });
+
+      const waste = num(fields.waste.value) / 100;
+      const overhead = num(fields.overhead.value) / 100;
+      const service = num(fields.serviceCharge.value) / 100;
+      const yieldCount = Math.max(1, Math.floor(num(fields.yield.value, 1)));
+      const targetFoodCostRatio = num(fields.targetFoodCost.value) / 100;
+
+      const extra = ingredientTotal * (waste + overhead + service);
+      const totalRecipe = ingredientTotal + extra;
+      const perPortion = totalRecipe / yieldCount;
+      const suggestedPrice = targetFoodCostRatio > 0 ? perPortion / targetFoodCostRatio : 0;
+
+      output.totalIngredientCost.textContent = formatMoney(ingredientTotal);
+      output.extraCost.textContent = formatMoney(extra);
+      output.totalRecipeCost.textContent = formatMoney(totalRecipe);
+      output.costPerPortion.textContent = formatMoney(perPortion);
+      output.suggestedPrice.textContent = formatMoney(suggestedPrice);
+
+      if (targetFoodCostRatio > 0) {
+        const grossMarginPct = (1 - targetFoodCostRatio) * 100;
+        output.marginBreakdown.textContent = `At ${num(fields.targetFoodCost.value).toFixed(1)}% food cost, estimated gross margin is ${grossMarginPct.toFixed(1)}%.`;
+      } else {
+        output.marginBreakdown.textContent = 'Set target food cost above 0 to calculate menu price and margin.';
+      }
+    }
+
+    function addIngredientRow(data = {}) {
+      const fragment = rowTemplate.content.cloneNode(true);
+      const row = fragment.querySelector('tr');
+
+      for (const [key, value] of Object.entries(data)) {
+        const el = row.querySelector(`[data-key="${key}"]`);
+        if (el) el.value = value;
+      }
+
+      row.addEventListener('input', computeTotals);
+      row.querySelector('.remove-btn').addEventListener('click', () => {
+        row.remove();
+        computeTotals();
+      });
+
+      ingredientBody.appendChild(row);
+      computeTotals();
+    }
+
+    function clearRows() {
+      ingredientBody.innerHTML = '';
+      addIngredientRow();
+    }
+
+    function loadExample() {
+      ingredientBody.innerHTML = '';
+      fields.yield.value = 8;
+      fields.waste.value = 4;
+      fields.overhead.value = 7;
+      fields.serviceCharge.value = 3;
+      fields.targetFoodCost.value = 30;
+      fields.currency.value = '$';
+
+      const sample = [
+        { name: 'Pasta', packSize: 1000, packUnit: 'g', packPrice: 2.8, qtyUsed: 900, useUnit: 'g' },
+        { name: 'Mushroom', packSize: 1000, packUnit: 'g', packPrice: 5.2, qtyUsed: 700, useUnit: 'g' },
+        { name: 'Cream', packSize: 1, packUnit: 'l', packPrice: 3.4, qtyUsed: 600, useUnit: 'ml' },
+        { name: 'Parmesan', packSize: 1000, packUnit: 'g', packPrice: 14, qtyUsed: 180, useUnit: 'g' },
+        { name: 'Olive Oil', packSize: 1, packUnit: 'l', packPrice: 12, qtyUsed: 80, useUnit: 'ml' }
+      ];
+
+      sample.forEach(addIngredientRow);
+      computeTotals();
+    }
+
+    function exportCsv() {
+      const rows = [...ingredientBody.querySelectorAll('tr')];
+      const header = ['Ingredient','Pack Size','Pack Unit','Pack Price','Qty Used','Use Unit','Cost in Recipe'];
+      const data = rows.map(row => {
+        const name = row.querySelector('[data-key="name"]').value;
+        const packSize = row.querySelector('[data-key="packSize"]').value;
+        const packUnit = row.querySelector('[data-key="packUnit"]').value;
+        const packPrice = row.querySelector('[data-key="packPrice"]').value;
+        const qtyUsed = row.querySelector('[data-key="qtyUsed"]').value;
+        const useUnit = row.querySelector('[data-key="useUnit"]').value;
+        const cost = ingredientCostFromRow(row).toFixed(2);
+        return [name, packSize, packUnit, packPrice, qtyUsed, useUnit, cost];
+      });
+
+      const totals = [
+        [],
+        ['Total Ingredient Cost', output.totalIngredientCost.textContent],
+        ['Extra Cost', output.extraCost.textContent],
+        ['Total Recipe Cost', output.totalRecipeCost.textContent],
+        ['Cost Per Portion', output.costPerPortion.textContent],
+        ['Suggested Menu Price', output.suggestedPrice.textContent]
+      ];
+
+      const csv = [header, ...data, ...totals]
+        .map(line => line.map(v => `"${String(v).replaceAll('"', '""')}"`).join(','))
+        .join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(document.getElementById('recipeName').value || 'recipe-cost').trim().replace(/\s+/g, '-')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadHtmlFile() {
+      const htmlDoc = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      const blob = new Blob([htmlDoc], { type: 'text/html;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'restaurant-recipe-cost-calculator.html';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById('addRowBtn').addEventListener('click', () => addIngredientRow());
+    document.getElementById('clearBtn').addEventListener('click', clearRows);
+    document.getElementById('loadExampleBtn').addEventListener('click', loadExample);
+    document.getElementById('downloadHtmlBtn').addEventListener('click', downloadHtmlFile);
+    document.getElementById('exportBtn').addEventListener('click', exportCsv);
+
+    Object.values(fields).forEach(el => el.addEventListener('input', computeTotals));
+
+    addIngredientRow();
+  </script>
+</body>
+</html>
